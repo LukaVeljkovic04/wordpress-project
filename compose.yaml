@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: wordpress-baza:1.0.0
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./domaci3a.sql:/data/domaci3a.sql
+    ports:
+      - 3306:3306
+    container_name: wordpress-baza-c
+    healthcheck:
+      test:  ["CMD", "mysqladmin", "ping", "-h", "localhost", "-P", "3306", "-u", "admin", "--password=admin"]
+      interval: 30s
+      timeout: 3s
+      retries: 10
+      start_period: 0s
+    networks: 
+      - domaci
+  wordpress:
+    image: wordpress:6.8.3-php8.1-apache
+    restart: unless-stopped
+    pull_policy: never
+    environment:
+      - WORDPRESS_DB_HOST=${DB_HOST}
+      - WORDPRESS_DB_USER=${DB_USER}
+      - WORDPRESS_DB_PASSWORD=${DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${DB_NAME}
+    volumes:
+      - .:/var/www/html/domaci3/wordpress-6.4.2/wordpress
+    healthcheck:
+      test: ["CMD","/bin/bash", "curl --fail localhost/domaci3/wordpress-6.4.2/wordpress/wp-login.php || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 10
+      start_period: 0s
+    ports:
+      - 8081:80
+    labels:
+      - authors=Luka, Ivana
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - domaci
+networks:
+  domaci:
+     driver: bridge
