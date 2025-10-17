@@ -1,17 +1,21 @@
+name: letsgotravel
 services:
   mysql:
-    image: wordpress-baza:1.0.0
+    image: wordpress-baza:latest
     restart: unless-stopped
+    pull_policy: never
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
     volumes:
-      - ./domaci3a.sql:/data/domaci3a.sql
+      - mysql_data:/data
     ports:
       - 3306:3306
     container_name: wordpress-baza-c
+    labels:
+      - database=relational
     healthcheck:
       test:  ["CMD", "mysqladmin", "ping", "-h", "localhost", "-P", "3306", "-u", "admin", "--password=admin"]
       interval: 30s
@@ -21,9 +25,9 @@ services:
     networks: 
       - domaci
   wordpress:
-    image: wordpress:6.8.3-php8.1-apache
-    restart: unless-stopped
+    image: wordpress-sajt
     pull_policy: never
+    restart: unless-stopped
     environment:
       - WORDPRESS_DB_HOST=${DB_HOST}
       - WORDPRESS_DB_USER=${DB_USER}
@@ -41,6 +45,7 @@ services:
       - 8081:80
     labels:
       - authors=Luka, Ivana
+    container_name: wordpress-c
     depends_on:
       mysql:
         condition: service_healthy
@@ -49,3 +54,5 @@ services:
 networks:
   domaci:
      driver: bridge
+volumes:
+  mysql_data:
